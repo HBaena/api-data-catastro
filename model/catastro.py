@@ -2,7 +2,6 @@ from .generic import Model
 from psycopg2 import sql, Binary
 from icecream import ic
 from functions import response_to_dict
-from .cripto import Cripto
 
 
 class Catastro(Cripto):
