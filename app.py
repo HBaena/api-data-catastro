@@ -75,7 +75,7 @@ class Saldos(Resource):
         if not request.args.get("force"):
             df_old = pd.read_feather("saldos.feather").set_index("index")        
         ic(len(df_old))
-        df_new = pd.read_sql_query(""" SELECT * FROM view_saldos OFFSET %s """ % len(df_old), con=conn)
+        df_new = pd.read_sql_query(str(open("query.sql", "r").read()) % len(df_old), con=conn)
         ic(df_new.shape)
         db_pool.release_connection(conn)
         if request.args.get("force"):
