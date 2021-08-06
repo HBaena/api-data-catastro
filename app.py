@@ -21,6 +21,7 @@ from pathlib import Path
 from os import getcwd, path
 
 import pandas as pd
+from time import time
 
 db_pool = None
 @app.after_request
@@ -50,11 +51,11 @@ def initialize() -> NoReturn:
 
 class Test(Resource):
     def get(self):
-        df = pd.read_feather("saldos.feather").set_index("index")        
-        ic(df.shape)
-        df = pd.read_feather("cuotas-especiales.feather").set_index("index")        
-        ic(df.shape)
-        return jsonify(hello="world")
+        df_1 = pd.read_feather("saldos.feather").set_index("index")        
+        ic(df_1.shape)
+        df_2 = pd.read_feather("cuotas-especiales.feather").set_index("index")        
+        ic(df_2.shape)
+        return jsonify(hello="world", saldos=df_1.sahpe, cuotas_especiales=df_2.shape)
 
 class Saldos(Resource):
     def get(self):
@@ -75,7 +76,9 @@ class Saldos(Resource):
         if not request.args.get("force"):
             df_old = pd.read_feather("saldos.feather").set_index("index")        
         ic(len(df_old))
+        t_0 = time()
         df_new = pd.read_sql_query(str(open("query.sql", "r").read()) % len(df_old), con=conn)
+        t_read = time() - t_0
         ic(df_new.shape)
         db_pool.release_connection(conn)
         if request.args.get("force"):
@@ -85,15 +88,17 @@ class Saldos(Resource):
         else:
             df = pd.concat([df_old, df_new])
         ic(df.shape)
-        ic("converting to excel")
-        df.to_excel("saldos.xlsx", sheet_name="SALDOS")  # Writting into excel
+        # ic("converting to excel")
+        # df.to_excel("saldos.xlsx", sheet_name="SALDOS")  # Writting into excel
         ic("converting to feather")
+        t_0 = time()
         df.reset_index().to_feather("saldos.feather")  # save to feather to improve the IO time 
-        ic("converting in json")
-        response = df.to_json(date_format="iso")
+        t_write = time() - t_0
+        # ic("converting in json")
+        # response = df.to_json(date_format="iso")
         with open("saldos.json", "w+") as file:
             file.write(response)
-        return response
+        return jsonify(updated=True, time_read=t_read, time_write=t_write)
 
 
 class CuotasEspeciales(Resource):
@@ -115,7 +120,9 @@ class CuotasEspeciales(Resource):
         if not request.args.get("force"):
             df_old = pd.read_feather("cuotas-especiales.feather").set_index("index")
         ic(len(df_old))
+        t_0 = time()
         df_new = pd.read_sql_query(""" SELECT * FROM view_lista_cuota_especial OFFSET %s """ % len(df_old), con=conn)
+        t_read = time() - t_0
         ic(df_new.shape)
         db_pool.release_connection(conn)
         if request.args.get("force"):
@@ -125,15 +132,17 @@ class CuotasEspeciales(Resource):
         else:
             df = pd.concat([df_old, df_new])
         ic(df.shape)
-        ic("converting to excel")
-        df.to_excel("cuotas-especiales.xlsx", sheet_name="CUOTAS-ESPECIALES")  # Writting into excel
+        # ic("converting to excel")
+        # df.to_excel("cuotas-especiales.xlsx", sheet_name="CUOTAS-ESPECIALES")  # Writting into excel
         ic("converting to feather")
+        t_0 = time()
         df.reset_index().to_feather("cuotas-especiales.feather")  # save to feather to improve the IO time 
-        ic("converting in json")
-        response = df.to_json(date_format="iso")
+        t_write = time() - t_0
+        # ic("converting in json")
+        # response = df.to_json(date_format="iso")
         with open("cuotas-especiales.json", "w+") as file:
             file.write(response)
-        return response
+        return jsonify(updated=True, time_read=t_read, time_write=t_write)
 
 
 class Download(Resource):
