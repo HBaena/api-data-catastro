@@ -55,7 +55,7 @@ class Test(Resource):
         ic(df_1.shape)
         df_2 = pd.read_feather("cuotas-especiales.feather").set_index("index")        
         ic(df_2.shape)
-        return jsonify(hello="world", saldos=df_1.sahpe, cuotas_especiales=df_2.shape)
+        return jsonify(hello="world", saldos=df_1.shape, cuotas_especiales=df_2.shape)
 
 class Saldos(Resource):
     def get(self):
@@ -77,7 +77,7 @@ class Saldos(Resource):
             df_old = pd.read_feather("saldos.feather").set_index("index")        
         ic(len(df_old))
         t_0 = time()
-        df_new = pd.read_sql_query(str(open("query.sql", "r").read()) % len(df_old), con=conn)
+        df_new = pd.read_sql_query(""" SELECT * FROM saldos OFFSET %s """ % len(df_old), con=conn)
         t_read = time() - t_0
         ic(df_new.shape)
         db_pool.release_connection(conn)
@@ -96,8 +96,8 @@ class Saldos(Resource):
         t_write = time() - t_0
         # ic("converting in json")
         # response = df.to_json(date_format="iso")
-        with open("saldos.json", "w+") as file:
-            file.write(response)
+        # with open("saldos.json", "w+") as file:
+            # file.write(response)
         return jsonify(updated=True, time_read=t_read, time_write=t_write)
 
 
@@ -121,7 +121,7 @@ class CuotasEspeciales(Resource):
             df_old = pd.read_feather("cuotas-especiales.feather").set_index("index")
         ic(len(df_old))
         t_0 = time()
-        df_new = pd.read_sql_query(""" SELECT * FROM view_lista_cuota_especial OFFSET %s """ % len(df_old), con=conn)
+        df_new = pd.read_sql_query(str(open("query.sql", "r").read()), con=conn)
         t_read = time() - t_0
         ic(df_new.shape)
         db_pool.release_connection(conn)
@@ -140,8 +140,8 @@ class CuotasEspeciales(Resource):
         t_write = time() - t_0
         # ic("converting in json")
         # response = df.to_json(date_format="iso")
-        with open("cuotas-especiales.json", "w+") as file:
-            file.write(response)
+        # with open("cuotas-especiales.json", "w+") as file:
+            # file.write(response)
         return jsonify(updated=True, time_read=t_read, time_write=t_write)
 
 
@@ -157,5 +157,5 @@ class Download(Resource):
 api.add_resource(Test, "/catastro/")
 api.add_resource(Saldos, "/catastro/datos/saldos/")
 api.add_resource(CuotasEspeciales, "/catastro/datos/cuotas-especiales/")
-api.add_resource(Download, "/catastro/datos/<string:file_name>/descargar/")
+""" SELECT * FROM view_lista_cuota_especial OFFSET %s """ % len(df_old))
 
