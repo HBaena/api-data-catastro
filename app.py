@@ -157,5 +157,5 @@ class Download(Resource):
 api.add_resource(Test, "/catastro/")
 api.add_resource(Saldos, "/catastro/datos/saldos/")
 api.add_resource(CuotasEspeciales, "/catastro/datos/cuotas-especiales/")
-""" SELECT * FROM view_lista_cuota_especial OFFSET %s """ % len(df_old))
+api.add_resource(Download, "/catastro/datos/<string:file_name>/descargar/")
 
