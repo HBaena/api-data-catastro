@@ -55,7 +55,9 @@ class Test(Resource):
         ic(df_1.shape)
         df_2 = pd.read_feather("cuotas-especiales.feather").set_index("index")        
         ic(df_2.shape)
-        return jsonify(hello="world", saldos=df_1.shape, cuotas_especiales=df_2.shape)
+        df_3 = pd.read_feather("pagos-recibo.feather").set_index("index")        
+        ic(df_2.shape)
+        return jsonify(hello="world", saldos=df_1.shape, cuotas_especiales=df_2.shape, pago_recibo=df_2.shape)
 
 class Saldos(Resource):
     def get(self):
@@ -121,7 +123,7 @@ class CuotasEspeciales(Resource):
             df_old = pd.read_feather("cuotas-especiales.feather").set_index("index")
         ic(len(df_old))
         t_0 = time()
-        df_new = pd.read_sql_query(str(open("query.sql", "r").read()), con=conn)
+        df_new = pd.read_sql_query(str(open("query.sql", "r").read() % len(df_old)), con=conn)
         t_read = time() - t_0
         ic(df_new.shape)
         db_pool.release_connection(conn)
@@ -145,6 +147,50 @@ class CuotasEspeciales(Resource):
         return jsonify(updated=True, time_read=t_read, time_write=t_write)
 
 
+class PagoRecibo(Resource):
+    def get(self):
+        ic("Saldos - Get")
+        ic("Reading feather")
+        df = pd.read_feather("pagos-recibo.feather")
+        ic("converting into json")
+        return df.to_json(date_format="iso")
+
+    def put(self):
+        """
+            UPDATE FILES
+        """
+        ic("cuotas")
+        conn = db_pool.get_connection()
+        ic("query")
+        df_old = []
+        if not request.args.get("force"):
+            df_old = pd.read_feather("pagos-recibo.feather").set_index("index")
+        ic(len(df_old))
+        t_0 = time()
+        df_new = pd.read_sql_query(""" SELECT view_pago_recibo """ % len(df_old), con=conn)
+        t_read = time() - t_0
+        ic(df_new.shape)
+        db_pool.release_connection(conn)
+        if request.args.get("force"):
+            df = df_new
+        elif not df_new.shape[0]:
+            df = df_old
+        else:
+            df = pd.concat([df_old, df_new])
+        ic(df.shape)
+        # ic("converting to excel")
+        # df.to_excel("pagos-recibo.xlsx", sheet_name="pagos-recibo")  # Writting into excel
+        ic("converting to feather")
+        t_0 = time()
+        df.reset_index().to_feather("pagos-recibo.feather")  # save to feather to improve the IO time 
+        t_write = time() - t_0
+        # ic("converting in json")
+        # response = df.to_json(date_format="iso")
+        # with open("cuotas-especiales.json", "w+") as file:
+            # file.write(response)
+        return jsonify(updated=True, time_read=t_read, time_write=t_write)
+
+
 class Download(Resource):
     def get(self, file_name):
         ext = request.args.get("formato", "xlsx")
@@ -157,5 +203,6 @@ class Download(Resource):
 api.add_resource(Test, "/catastro/")
 api.add_resource(Saldos, "/catastro/datos/saldos/")
 api.add_resource(CuotasEspeciales, "/catastro/datos/cuotas-especiales/")
+api.add_resource(PagoRecibo, "/catastro/datos/pago-recibo/")
 api.add_resource(Download, "/catastro/datos/<string:file_name>/descargar/")
 
