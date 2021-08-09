@@ -18,10 +18,13 @@ from typing import Any, NoReturn
 from base64 import b64encode 
 from icecream import ic
 from pathlib import Path
+
 from os import getcwd, path
 
 import pandas as pd
 from time import time
+from datetime import datetime
+
 
 db_pool = None
 @app.after_request
@@ -55,9 +58,7 @@ class Test(Resource):
         ic(df_1.shape)
         df_2 = pd.read_feather("cuotas-especiales.feather").set_index("index")        
         ic(df_2.shape)
-        df_3 = pd.read_feather("pagos-recibo.feather").set_index("index")        
-        ic(df_2.shape)
-        return jsonify(hello="world", saldos=df_1.shape, cuotas_especiales=df_2.shape, pago_recibo=df_2.shape)
+        return jsonify(hello="world", saldos=df_1.shape, cuotas_especiales=df_2.shape)
 
 class Saldos(Resource):
     def get(self):
@@ -197,7 +198,20 @@ class Download(Resource):
         ic(ext)
         if file_name in ("cuotas-especiales", "saldos") or ext not in ("xlsx", "json", "feather"):
             return send_file(f"{file_name}.{ext}", as_attachment=request.args.get("as_attachment", False))
-        return jsonify(status="fail"), 500
+        return jsonify(status="fail")
+
+
+class FileInfo(Resource):
+    def get(self, file_name):
+            # file = "http://miros.geovirtual.mx:5005/catastro/datos/cuotas-especiales/descargar/?formato=feather"
+            # response = requests.get(url, stream=True)
+            # dir(response.raw)
+            # import os.path, time
+            try:
+                fname = pathlib.Path(f'{file_name}.feather')
+                return jsonify(modified= datetime.fromtimestamp(fname.stat().st_mtime).strftime('%Y:%m:%d %H:%M'))
+            except Exception as e:
+                return jsonify(modified=None, log=str(e)), 501
 
 
 api.add_resource(Test, "/catastro/")
@@ -205,4 +219,5 @@ api.add_resource(Saldos, "/catastro/datos/saldos/")
 api.add_resource(CuotasEspeciales, "/catastro/datos/cuotas-especiales/")
 api.add_resource(PagoRecibo, "/catastro/datos/pago-recibo/")
 api.add_resource(Download, "/catastro/datos/<string:file_name>/descargar/")
+api.add_resource(FileInfo, "/catastro/datos/<string:file_name>/info/")
 
