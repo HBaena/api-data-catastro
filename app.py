@@ -96,6 +96,7 @@ class Saldos(Resource):
         ic("converting to feather")
         t_0 = time()
         df.reset_index().to_feather("saldos.feather")  # save to feather to improve the IO time 
+        df.to_parquet("saldos.parquet")  # save to feather to improve the IO time 
         t_write = time() - t_0
         # ic("converting in json")
         # response = df.to_json(date_format="iso")
@@ -140,6 +141,7 @@ class CuotasEspeciales(Resource):
         ic("converting to feather")
         t_0 = time()
         df.reset_index().to_feather("cuotas-especiales.feather")  # save to feather to improve the IO time 
+        df.to_parquet("cuotas-especiales.parquet")  # save to feather to improve the IO time 
         t_write = time() - t_0
         # ic("converting in json")
         # response = df.to_json(date_format="iso")
@@ -184,6 +186,7 @@ class PagoRecibo(Resource):
         ic("converting to feather")
         t_0 = time()
         df.reset_index().to_feather("pagos-recibo.feather")  # save to feather to improve the IO time 
+        df.to_parquet("pagos-recibo.parquet")  # save to feather to improve the IO time 
         t_write = time() - t_0
         # ic("converting in json")
         # response = df.to_json(date_format="iso")
@@ -196,7 +199,7 @@ class Download(Resource):
     def get(self, file_name):
         ext = request.args.get("formato", "xlsx")
         ic(ext)
-        if file_name in ("cuotas-especiales", "saldos") or ext not in ("xlsx", "json", "feather"):
+        if file_name in ("cuotas-especiales", "saldos") or ext not in ("xlsx", "json", "feather", "parquet"):
             return send_file(f"{file_name}.{ext}", as_attachment=request.args.get("as_attachment", False))
         return jsonify(status="fail")
 
