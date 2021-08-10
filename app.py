@@ -90,7 +90,6 @@ class Saldos(Resource):
             df = df_old
         else:
             df = pd.concat([df_old, df_new])
-        ic(df.shape)
         # ic("converting to excel")
         # df.to_excel("saldos.xlsx", sheet_name="SALDOS")  # Writting into excel
         ic("converting to feather")
@@ -135,9 +134,34 @@ class CuotasEspeciales(Resource):
             df = df_old
         else:
             df = pd.concat([df_old, df_new])
-        ic(df.shape)
         # ic("converting to excel")
         # df.to_excel("cuotas-especiales.xlsx", sheet_name="CUOTAS-ESPECIALES")  # Writting into excel
+        ic(df.shape)
+        cols = ['cuenta', 'movimiento', 'nombre', 'comentarios', 'efecto',        
+                               'situacion', 'cve' ,'aprobado', 'aplicado', 'fecha asignacion',
+                               'ubicacion', 'valor fiscal', 'observaciones', 'usuario', 'monto a pagar',                 
+                               'recibo', 'folio', 'caja', 'fecha pago']
+        df.columns = cols  # Rename cols for better understanding
+        cols = [
+            'cuenta', 'nombre', 'comentarios', 'efecto', 'movimiento', 'situacion', 'aprobado', 'aplicado', 
+            'valor fiscal', 'observaciones', 'usuario', 'monto a pagar', 'recibo', 'folio', 'caja', 
+            'ubicacion', 'fecha pago', 'fecha asignacion']
+        ic()
+        df["monto a pagar"].fillna(0.0, inplace=True)
+        # df["monto a pagar"] = np.ceil(df["monto a pagar"]) 
+        df.efecto = df.efecto.astype(int)
+        df["fecha pago"] = pd.to_datetime(df["fecha pago"]).dt.strftime("%Y-%m-%d %H:%M")
+        df["fecha asignacion"] = pd.to_datetime(df["fecha asignacion"]).dt.strftime("%Y-%m-%d %H:%M")
+        df["caja"].fillna("NaN", inplace=True)
+        df["folio"].fillna("NaN", inplace=True)
+        df["movimiento"].replace({
+            "SIS": "Sistema de interés social",
+            "STE": "Sistema de 3ra edad",
+            "SJP": "Sistema de jubilado pensionado",
+            "DAS": "Sistema de asistencia social",
+            "SDC": "Sistema de discapacidad",
+            "SDI": "Sistema de discapacidad",
+        }, inplace=True)
         ic("converting to feather")
         t_0 = time()
         df.reset_index().to_feather("cuotas-especiales.feather")  # save to feather to improve the IO time 
@@ -180,7 +204,6 @@ class PagoRecibo(Resource):
             df = df_old
         else:
             df = pd.concat([df_old, df_new])
-        ic(df.shape)
         # ic("converting to excel")
         # df.to_excel("pagos-recibo.xlsx", sheet_name="pagos-recibo")  # Writting into excel
         ic("converting to feather")
