@@ -95,6 +95,7 @@ class Saldos(Resource):
         ic("converting to feather")
         t_0 = time()
         df.reset_index().to_feather("saldos.feather")  # save to feather to improve the IO time 
+        df = df.sort_values(["fecha asignacion", "fecha pago"], ascending=False)
         df.to_parquet("saldos.parquet")  # save to feather to improve the IO time 
         t_write = time() - t_0
         # ic("converting in json")
@@ -165,6 +166,7 @@ class CuotasEspeciales(Resource):
         ic("converting to feather")
         t_0 = time()
         df.reset_index().to_feather("cuotas-especiales.feather")  # save to feather to improve the IO time 
+        df = df.sort_values(["fecha asignacion", "fecha pago"], ascending=False)
         df.to_parquet("cuotas-especiales.parquet")  # save to feather to improve the IO time 
         t_write = time() - t_0
         # ic("converting in json")
@@ -209,6 +211,7 @@ class PagoRecibo(Resource):
         ic("converting to feather")
         t_0 = time()
         df.reset_index().to_feather("pagos-recibo.feather")  # save to feather to improve the IO time 
+        df = df.sort_values(["fecha asignacion", "fecha pago"], ascending=False)
         df.to_parquet("pagos-recibo.parquet")  # save to feather to improve the IO time 
         t_write = time() - t_0
         # ic("converting in json")
