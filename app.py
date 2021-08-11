@@ -237,7 +237,7 @@ class FileInfo(Resource):
             # dir(response.raw)
             # import os.path, time
             try:
-                fname = pathlib.Path(f'{file_name}.feather')
+                fname = Path(f'{file_name}.feather')
                 return jsonify(modified= datetime.fromtimestamp(fname.stat().st_mtime).strftime('%Y:%m:%d %H:%M'))
             except Exception as e:
                 return jsonify(modified=None, log=str(e)), 501
