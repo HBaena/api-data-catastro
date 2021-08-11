@@ -6,7 +6,9 @@ from flask import jsonify  # Flask, receiving data from requests, json handling
 from flask import after_this_request  
 from flask_restful import Resource  # modules for fast creation of apis
 
+from werkzeug.exceptions import HTTPException
 from config import app
+
 from config import api
 from config import connect_to_db_from_json
 
@@ -250,3 +252,10 @@ api.add_resource(PagoRecibo, "/catastro/datos/pago-recibo/")
 api.add_resource(Download, "/catastro/datos/<string:file_name>/descargar/")
 api.add_resource(FileInfo, "/catastro/datos/<string:file_name>/info/")
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+        if db_pool.pool.closed:
+            initialize()
+            return jsonify(msg="db error", status_code=502)
+        else: 
+            return jsonify(msg="error", status_code=502)
