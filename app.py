@@ -140,10 +140,12 @@ class CuotasEspeciales(Resource):
         # ic("converting to excel")
         # df.to_excel("cuotas-especiales.xlsx", sheet_name="CUOTAS-ESPECIALES")  # Writting into excel
         ic(df.shape)
-        cols = ['cuenta', 'movimiento', 'nombre', 'comentarios', 'efecto',        
-                               'situacion', 'cve' ,'aprobado', 'aplicado', 'fecha asignacion',
-                               'ubicacion', 'valor fiscal', 'observaciones', 'usuario', 'monto a pagar',                 
-                               'recibo', 'folio', 'caja', 'fecha pago']
+
+        cols = ['id_usuario', 'cuenta', 'movimiento', 'nombre', 'comentarios', 'efecto',        
+                               'situacion', 'aprobado', 'aplicado', 'fecha asignacion', 'padron'
+                               'ubicacion', 'valor fiscal', 'observaciones', 'usuario', 'periodo inicio', 
+                               'periodo fin', 'monto a pagar',                 
+                               'recibo', 'recibo', 'folio', 'caja', 'fecha pago']
         df.columns = cols  # Rename cols for better understanding
         cols = [
             'cuenta', 'nombre', 'comentarios', 'efecto', 'movimiento', 'situacion', 'aprobado', 'aplicado', 
@@ -169,6 +171,7 @@ class CuotasEspeciales(Resource):
         t_0 = time()
         df.reset_index().to_feather("cuotas-especiales.feather")  # save to feather to improve the IO time 
         df = df.sort_values(["fecha asignacion", "fecha pago"], ascending=False)
+        print("to parquet ---------------------------------------------")
         df.to_parquet("cuotas-especiales.parquet")  # save to feather to improve the IO time 
         t_write = time() - t_0
         # ic("converting in json")
@@ -258,4 +261,4 @@ def handle_exception(e):
             initialize()
             return jsonify(msg="db error", status_code=502)
         else: 
-            return jsonify(msg="error", status_code=502)
+            return jsonify(msg="error", status_code=502, log=str(e))
