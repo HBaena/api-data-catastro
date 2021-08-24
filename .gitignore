@@ -5,5 +5,8 @@ __pycache__/
 *test*
 *.db
 api-env/
-*.xslx
+*.xlsx
 *.feather
+*.parquet
+*.out
+*-env*

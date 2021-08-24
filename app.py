@@ -142,10 +142,10 @@ class CuotasEspeciales(Resource):
         ic(df.shape)
 
         cols = ['id_usuario', 'cuenta', 'movimiento', 'nombre', 'comentarios', 'efecto',        
-                               'situacion', 'aprobado', 'aplicado', 'fecha asignacion', 'padron'
+                               'situacion', 'aprobado', 'aplicado', 'fecha asignacion', 'padron',
                                'ubicacion', 'valor fiscal', 'observaciones', 'usuario', 'periodo inicio', 
                                'periodo fin', 'monto a pagar',                 
-                               'recibo', 'recibo', 'folio', 'caja', 'fecha pago']
+                               'recibo', 'folio', 'caja', 'fecha pago']
         df.columns = cols  # Rename cols for better understanding
         cols = [
             'cuenta', 'nombre', 'comentarios', 'efecto', 'movimiento', 'situacion', 'aprobado', 'aplicado', 
