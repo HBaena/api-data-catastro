@@ -309,20 +309,7 @@ api.add_resource(Saldos, "/catastro/datos/saldos/")
 api.add_resource(CuotasEspeciales, "/catastro/datos/cuotas-especiales/")
 api.add_resource(PagoRecibo, "/catastro/datos/pago-recibo/")
 api.add_resource(CarteraCatastral, "/catastro/datos/cartera-catastral/")
-api.add_resource(CarteraCatastral, "/catastro/datos/pagos/")
-api.add_resource(Download, "/catastro/datos/<string:file_name>/descargar/")
-api.add_resource(FileInfo, "/catastro/datos/<string:file_name>/info/")
-
-@app.errorhandler(Exception)
-def handle_exception(e):
-        if db_pool.pool.closed:
-            initialize()
-            return jsonify(msg="db error", status_code=502)
-        else: 
-            return jsonify(msg="error", status_code=502, log=str(e))
-
-
-(PagoRecibo, "/catastro/datos/pago-recibo/")
+api.add_resource(Pagos, "/catastro/datos/pagos/")
 api.add_resource(Download, "/catastro/datos/<string:file_name>/descargar/")
 api.add_resource(FileInfo, "/catastro/datos/<string:file_name>/info/")
 
