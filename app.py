@@ -226,11 +226,67 @@ class PagoRecibo(Resource):
         return jsonify(updated=True, time_read=t_read, time_write=t_write)
 
 
+class Pagos(Resource):
+    def get(self):
+        ic("Cartera - Get")
+        ic("Reading feather")
+        df = pd.read_feather("pagos.feather")
+        ic("converting into json")
+        return df.to_json(date_format="iso")
+
+    def put(self):
+        """
+            UPDATE FILES
+        """
+        ic("Cartera")
+        conn = db_pool.get_connection()
+        ic("query")
+        t_0 = time()
+        df = pd.read_sql_query(""" SELECT * FROM view_cartera """, con=conn)
+        t_read = time() - t_0
+        db_pool.release_connection(conn)
+        ic("converting to feather")
+        t_0 = time()
+        df.reset_index().to_feather("pagos.feather")  # save to feather to improve the IO time 
+        # df = df.sort_values(["fecha asignacion", "fecha pago"], ascending=False)
+        df.to_parquet("pagos.parquet")  # save to feather to improve the IO time 
+        t_write = time() - t_0
+        return jsonify(updated=True, time_read=t_read, time_write=t_write)
+
+
+class CarteraCatastral(Resource):
+    def get(self):
+        ic("Cartera - Get")
+        ic("Reading feather")
+        df = pd.read_feather("cartera-catastral.feather")
+        ic("converting into json")
+        return df.to_json(date_format="iso")
+
+    def put(self):
+        """
+            UPDATE FILES
+        """
+        ic("Cartera")
+        conn = db_pool.get_connection()
+        ic("query")
+        t_0 = time()
+        df = pd.read_sql_query(""" SELECT * FROM view_lista_pagos """, con=conn)
+        t_read = time() - t_0
+        db_pool.release_connection(conn)
+        ic("converting to feather")
+        t_0 = time()
+        df.reset_index().to_feather("cartera-catastral.feather")  # save to feather to improve the IO time 
+        # df = df.sort_values(["fecha asignacion", "fecha pago"], ascending=False)
+        df.to_parquet("cartera-catastral.parquet")  # save to feather to improve the IO time 
+        t_write = time() - t_0
+        return jsonify(updated=True, time_read=t_read, time_write=t_write)
+
+
 class Download(Resource):
     def get(self, file_name):
         ext = request.args.get("formato", "xlsx")
         ic(ext)
-        if file_name in ("cuotas-especiales", "saldos") or ext not in ("xlsx", "json", "feather", "parquet"):
+        if file_name in ("cuotas-especiales", "saldos", "pagos", "cartera-catastral") or ext not in ("xlsx", "json", "feather", "parquet"):
             return send_file(f"{file_name}.{ext}", as_attachment=request.args.get("as_attachment", False))
         return jsonify(status="fail")
 
@@ -252,6 +308,21 @@ api.add_resource(Test, "/catastro/")
 api.add_resource(Saldos, "/catastro/datos/saldos/")
 api.add_resource(CuotasEspeciales, "/catastro/datos/cuotas-especiales/")
 api.add_resource(PagoRecibo, "/catastro/datos/pago-recibo/")
+api.add_resource(CarteraCatastral, "/catastro/datos/cartera-catastral/")
+api.add_resource(CarteraCatastral, "/catastro/datos/pagos/")
+api.add_resource(Download, "/catastro/datos/<string:file_name>/descargar/")
+api.add_resource(FileInfo, "/catastro/datos/<string:file_name>/info/")
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+        if db_pool.pool.closed:
+            initialize()
+            return jsonify(msg="db error", status_code=502)
+        else: 
+            return jsonify(msg="error", status_code=502, log=str(e))
+
+
+(PagoRecibo, "/catastro/datos/pago-recibo/")
 api.add_resource(Download, "/catastro/datos/<string:file_name>/descargar/")
 api.add_resource(FileInfo, "/catastro/datos/<string:file_name>/info/")
 
