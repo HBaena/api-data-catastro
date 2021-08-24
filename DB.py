@@ -26,18 +26,21 @@ class PosgresPoolConnection(PoolConection):
         with open(config_filename, "r") as file:
             db_args = json.loads(file.read())
             pool_size = db_args.pop("pool_size")
-        self.pool = pool.ThreadedConnectionPool(
-            minconn=pool_size,
-            maxconn=pool_size,
-            **db_args
-        )
+        self.db_args = db_args
+        # self.pool = pool.ThreadedConnectionPool(
+        #     minconn=pool_size,
+        #     maxconn=pool_size,
+        #     **db_args
+        # )
 
     def get_connection(self):
-        return self.pool.getconn()
+        # return self.pool.getconn()
+        return connect(**self.db_args)
 
     def release_connection(self, connection):
         try:
-            self.pool.putconn(connection)
+            # self.pool.putconn(connection)
+            connection.close()
             return True
         except Exception as e:
             logging.debug(str(e))
@@ -45,7 +48,7 @@ class PosgresPoolConnection(PoolConection):
 
     def  __del__(self):
         try:
-            self.pool.closeall()
+            # self.pool.closeall()
             return True
         except Exception as e:
             logging.debug(str(e))
